@@ -1,0 +1,156 @@
+---
+title: "Chapter 4"
+author: "Kunwoo Park"
+date: '2017 11 2 '
+output:
+  pdf_document:
+    latex_engine: xelatex
+mainfont: NanumGothic
+---
+
+```{r}
+library(gapminder)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+gapminder %>% ggplot(aes(x=lifeExp)) + geom_histogram()
+gapminder %>% ggplot(aes(x=gdpPercap)) + geom_histogram()
+gapminder %>% ggplot(aes(x=gdpPercap)) + geom_histogram() +
+  scale_x_log10()
+gapminder %>% ggplot(aes(x=gdpPercap, y=lifeExp)) + geom_point() +
+  scale_x_log10() + geom_smooth()
+```
+
+
+## 변수의 종류에 따른 시각화
+
+```{r}
+glimpse(diamonds)
+glimpse(mpg)
+```
+
+### 4.3.1 한 수량형 변수
+
+```{r}
+gapminder %>% ggplot(aes(x=gdpPercap)) + geom_histogram()
+gapminder %>% ggplot(aes(x=gdpPercap)) + geom_histogram() +
+  scale_x_log10()
+gapminder %>% ggplot(aes(x=gdpPercap)) + geom_freqpoly() +
+  scale_x_log10()
+gapminder %>% ggplot(aes(x=gdpPercap)) + geom_density() +
+  scale_x_log10()
+summary(gapminder)
+```
+
+### 4.3.2 한 범주형 변수
+
+```{r}
+diamonds %>% ggplot(aes(cut)) + geom_bar()
+```
+
+```{r}
+table(diamonds$cut)
+prop.table(table(diamonds$cut))
+round(prop.table(table(diamonds$cut))*100, 1)
+```
+
+```{r}
+diamonds %>%
+  group_by(cut) %>%
+  tally() %>%
+  mutate(pct = round(n/sum(n)*100, 1))
+  
+```
+
+
+### 4.3.3 두 수량형 변수
+
+```{r}
+diamonds %>% ggplot(aes(carat, price)) + geom_point()
+diamonds %>% ggplot(aes(carat, price)) + geom_point(alpha=.01)
+mpg %>% ggplot(aes(cyl, hwy)) + geom_point()
+mpg %>% ggplot(aes(cyl, hwy)) + geom_jitter()
+```
+
+```{r}
+pairs(diamonds %>% sample_n(1000))
+```
+
+
+### 4.3.4 수량형 변수와 범주형 번수
+
+```{r}
+mpg %>% ggplot(aes(class, hwy)) + geom_boxplot()
+```
+
+```{r}
+mpg %>% ggplot(aes(class, hwy)) + geom_jitter(col='gray') +
+  geom_boxplot(alpha=.5)
+mpg %>% mutate(class=reorder(class, hwy, median)) %>%
+  ggplot(aes(class, hwy)) + geom_jitter(col='gray') +
+  geom_boxplot(alpha=.5)
+mpg %>% mutate(class=factor(class, levels=c("2seater", "subcompact", "compact", "midsize",
+                                            "minivan", "suv", "pickup"))) %>%
+  ggplot(aes(class, hwy)) + geom_jitter(col="gray") +
+  geom_boxplot(alpha=.5)
+mpg %>% mutate(class=factor(class, levels=c("2seater", "subcompact", "compact", "midsize",
+                                            "minivan", "suv", "pickup"))) %>%
+  ggplot(aes(class, hwy)) + geom_jitter(col="gray") +
+  geom_boxplot(alpha=.5) + coord_flip()
+```
+
+
+### 4.3.5 두 범주형 변수
+
+```{r}
+glimpse(data.frame(Titanic))
+xtabs(Freq ~ Class + Sex + Age + Survived, data.frame(Titanic))
+```
+
+```{r}
+mosaicplot(Titanic, main = "Survival on the Titanic")
+mosaicplot(Titanic, main = "Survival on the Titanic", color=TRUE)
+```
+
+```{r}
+t2 = data.frame(Titanic)
+t2 %>% group_by(Sex) %>%
+  summarize(n = sum(Freq),
+            survivors=sum(ifelse(Survived=="Yes", Freq, 0))) %>%
+  mutate(rate_survival=survivors/n)
+```
+
+
+### 4.3.6 더 많은 변수를 보여주는 기술 1: geom의 다른 속성을 사용
+
+```{r}
+gapminder %>% filter(year==2007) %>%
+  ggplot(aes(gdpPercap, lifeExp)) +
+  geom_point() + scale_x_log10() + 
+  ggtitle("Gapminder data for 2007")
+
+gapminder %>% filter(year==2007) %>%
+  ggplot(aes(gdpPercap, lifeExp)) +
+  geom_point(aes(size=pop, col=continent)) + scale_x_log10() + 
+  ggtitle("Gapminder data for 2007")
+```
+
+
+### 4.3.7 더 많은 변수를 보여주는 기술 2: facet_* 함수를 사용
+
+```{r}
+gapminder %>%
+  ggplot(aes(year, lifeExp, group=country)) +
+  geom_line()
+
+gapminder %>%
+  ggplot(aes(year, lifeExp, group=country, col=continent)) +
+  geom_line()
+
+gapminder %>%
+  ggplot(aes(year, lifeExp, group=country)) +
+  geom_line() +
+  facet_wrap(~continent)
+```
